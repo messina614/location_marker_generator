@@ -100,54 +100,52 @@
     }
 
     async function generateQRCodes() {
+            const venueName = document.getElementById('venueName').value.toLowerCase();
+            const urls = document.getElementById('output').value.trim().split('\n');
+            const qrColor = document.getElementById('qrColor').value;
+            const zip = new JSZip();
+
+            const qrCodeFiles = await Promise.all(urls.map(async (url) => {
+                const qrCode = await QRCode.toDataURL(url, {
+                    errorCorrectionLevel: 'L',
+                    type: 'image/png',
+                    color: {
+                        dark: qrColor,
+                        light: qrColor === 'white' ? 'transparent' : 'white',
+                    },
+                    width: 1000,
+                });
+
+                const fileName = `${url.split('=').pop()}_${venueName}.png`;
+                return { fileName, qrCode };
+            }));
+
+            qrCodeFiles.forEach(({ fileName, qrCode }) => {
+                zip.file(fileName, qrCode.split(',')[1], { base64: true });
+            });
+
+            return zip.generateAsync({ type: 'blob' });
+        }
+
+        function generateQRCodesWrapper() {
             const generateButton = document.getElementById('generateButton');
             generateButton.disabled = true;
             generateButton.textContent = 'Generating...';
 
-            const venueName = document.getElementById('venueName').value.toLowerCase();
-            const urls = document.getElementById('output').value.trim().split('\n');
-            const qrColor = document.getElementById('qrColor').value;
+            generateQRCodes().then(blob => {
+                const venueName = document.getElementById('venueName').value.toLowerCase();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${venueName}_qrcodes.zip`;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
 
-            if (venueName && urls.length) {
-                const zip = new JSZip();
-
-                const qrCodeFiles = await Promise.all(urls.map(async (url) => {
-                    const qrCode = await QRCode.toDataURL(url, {
-                        errorCorrectionLevel: 'L',
-                        type: 'image/png',
-                        color: {
-                            dark: qrColor,
-                            light: qrColor === 'white' ? 'transparent' : 'white',
-                        },
-                        width: 1000,
-                    });
-
-                    const fileName = `${url.split('=').pop()}_${venueName}.png`;
-                    return { fileName, qrCode };
-                }));
-
-                qrCodeFiles.forEach(({ fileName, qrCode }) => {
-                    zip.file(fileName, qrCode.split(',')[1], { base64: true });
-                });
-
-                zip.generateAsync({ type: 'blob' }).then(blob => {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `${venueName}_qrcodes.zip`;
-                    link.style.display = 'none';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    generateButton.textContent = '2. Generate QR Codes';
-                    generateButton.disabled = false;
-                });
-            } else {
-                alert('Please enter a venue name and generate URLs before generating QR codes.');
                 generateButton.textContent = '2. Generate QR Codes';
                 generateButton.disabled = false;
-            }
+            });
         }
     </script>
-
-
+</body>
+</html>
