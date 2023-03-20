@@ -149,7 +149,7 @@
                 width: 1000,
             });
 
-            const fileName = `${url.split('=')[-1]}_${venueName}.png`;
+            const fileName = `${url.split('=').pop()}_${venueName}.png`;
             return { fileName, qrCode };
         }));
 
@@ -170,5 +170,6 @@
         alert('Please enter a venue name and generate URLs before generating QR codes.');
     }
 }
+
 
 </script>
