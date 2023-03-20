@@ -35,7 +35,7 @@
             </p>
             <p>
                 <button type="button" onclick="generateURLs()">1. Generate URLs</button>
-                <button type="button" id="generateQRCodesButton" onclick="generateQRCodes()">2. Generate QR Codes</button>
+                <button type="button" id="generateQRCodesButton" onclick="generateQRCodesWrapper()">2. Generate QR Codes</button>
             </p>
         </form>
         <textarea id="output"></textarea>
@@ -87,24 +87,25 @@
         }
 
         function generateQRCodesWrapper() {
-            const generateButton = document.getElementById('generateButton');
-            generateButton.disabled = true;
-            generateButton.textContent = 'Generating...';
+    const generateButton = document.getElementById('generateQRCodesButton');
+    generateButton.disabled = true;
+    generateButton.textContent = 'Generating...';
 
-            generateQRCodes().then(blob => {
-                const venueName = document.getElementById('venueName').value.toLowerCase();
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `${venueName}_qrcodes.zip`;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+    generateQRCodes().then(blob => {
+        const venueName = document.getElementById('venueName').value.toLowerCase();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${venueName}_qrcodes.zip`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-                generateButton.textContent = '2. Generate QR Codes';
-                generateButton.disabled = false;
-            });
-        }
+        generateButton.textContent = '2. Generate QR Codes';
+        generateButton.disabled = false;
+    });
+}
+
     </script>
 </body>
 </html>
