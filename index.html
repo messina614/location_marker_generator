@@ -76,7 +76,7 @@
             </p>
             <p>
                 <button type="button" onclick="generateURLs()">1. Generate URLs</button>
-                <button type="button" onclick="generateQRCodes()">2. Generate QR Codes</button>
+                <button type="button" id="generateQRCodesButton" onclick="generateQRCodes()">2. Generate QR Codes</button>
             </p>
         </form>
         <textarea id="output"></textarea>
@@ -100,6 +100,10 @@
     }
 
     async function generateQRCodes() {
+        const button = document.querySelector('#generateQRCodesButton');
+        button.innerHTML = 'Generating...';
+        button.disabled = true;
+
         const venueName = document.getElementById('venueName').value.toLowerCase();
         const urls = document.getElementById('output').value.trim().split('\n');
         const qrColor = document.getElementById('qrColor').value;
@@ -134,10 +138,16 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+
+                button.innerHTML = '2. Generate QR Codes';
+                button.disabled = false;
             });
         } else {
             alert('Please enter a venue name and generate URLs before generating QR codes.');
+            button.innerHTML = '2. Generate QR Codes';
+            button.disabled = false;
         }
     }
 </script>
+
 
