@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Marker Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fafafa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-family: "PP Neue Montreal", sans-serif;
+            font-size: 31px;
+            font-weight: bold;
+        }
+        label {
+            display: inline-block;
+            font-size: 14px;
+            width: 140px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        input[type="text"] {
+            font-size: 13px;
+            width: 200px;
+        }
+        button {
+            font-size: 14px;
+            font-weight: bold;
+            background-color: black;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #444;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-size: 13px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Location Marker Generator</h1>
+        <form id="generatorForm">
+            <p>
+                <label for="venueName">Venue Name:</label>
+                <input type="text" id="venueName">
+            </p>
+            <p>
+                <label for="uuid">UUID:</label>
+                <input type="text" id="uuid">
+            </p>
+            <p>
+                <label for="tableNumbers">Table Numbers:</label>
+                <input type="text" id="tableNumbers">
+            </p>
+            <p>
+                <label for="qrColor">QR Code Color:</label>
+                <select id="qrColor">
+                    <option value="black">black</option>
+                    <option value="white">white</option>
+                </select>
+            </p>
+            <p>
+                <button type="button" onclick="generateURLs()">1. Generate URLs</button>
+                <button type="button" onclick="generateQRCodes()">2. Generate QR Codes</button>
+            </p>
+        </form>
+        <textarea id="output"></textarea>
+    </div>
+    <script>
+        function generateURLs() {
+            const uuid = document.getElementById('uuid').value;
+            const tableNumbersInput = document.getElementById('tableNumbers').value.replace(' ', '');
+            let tableNumbers;
+
+            if (tableNumbersInput.includes('-')) {
+                const [start, end] = tableNumbersInput.split('-').map(Number);
+                tableNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+            } else {
+                tableNumbers = tableNumbersInput.split(',').map(Number);
+            }
+
+            const urls = tableNumbers.map(num => `https://getunion.com/app?venue_uuid=${uuid}&table_name=${num}`);
+            document.getElementById('output').value = urls.join('\n');
+        }
+
+        function generateQRCodes() {
+            const venueName = document.getElementById('venueName').value.toLowerCase();
+            const urls = document.getElementById('output').value.trim().split('\n');
+            const qrColor = document.getElementById('qrColor').value;
+            if (venueName && urls.length) {
+            urls.forEach(async (url, index) => {
+                const qrCode = await QRCode.toDataURL(url, {
+                    errorCorrectionLevel: 'L',
+                    type: 'image/png',
+                    color: {
+                        dark: qrColor,
+                        light: qrColor === 'white' ? 'transparent' : 'white',
+                    },
+                    width: 1000,
+                });
+
+                const link = document.createElement('a');
+                link.href = qrCode;
+                link.download = `${url.split('=')[-1]}_${venueName}.png`;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                if (index === urls.length - 1) {
+                    alert('QR Codes have been generated and downloaded.');
+                }
+            });
+        } else {
+            alert('Please enter a venue name and generate URLs before generating QR codes.');
+        }
+    }
+</script>
