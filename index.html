@@ -81,29 +81,33 @@
         </form>
         <textarea id="output"></textarea>
     </div>
-    <script>
-        function generateURLs() {
-            const uuid = document.getElementById('uuid').value;
-            const tableNumbersInput = document.getElementById('tableNumbers').value.replace(' ', '');
-            let tableNumbers;
+    
+   <script>
+    function generateURLs() {
+        const uuid = document.getElementById('uuid').value;
+        const tableNumbersInput = document.getElementById('tableNumbers').value.replace(' ', '');
+        let tableNumbers;
 
-            if (tableNumbersInput.includes('-')) {
-                const [start, end] = tableNumbersInput.split('-').map(Number);
-                tableNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-            } else {
-                tableNumbers = tableNumbersInput.split(',').map(Number);
-            }
-
-            const urls = tableNumbers.map(num => `https://getunion.com/app?venue_uuid=${uuid}&table_name=${num}`);
-            document.getElementById('output').value = urls.join('\n');
+        if (tableNumbersInput.includes('-')) {
+            const [start, end] = tableNumbersInput.split('-').map(Number);
+            tableNumbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+        } else {
+            tableNumbers = tableNumbersInput.split(',').map(Number);
         }
 
-        function generateQRCodes() {
-            const venueName = document.getElementById('venueName').value.toLowerCase();
-            const urls = document.getElementById('output').value.trim().split('\n');
-            const qrColor = document.getElementById('qrColor').value;
-            if (venueName && urls.length) {
-            urls.forEach(async (url, index) => {
+        const urls = tableNumbers.map(num => `https://getunion.com/app?venue_uuid=${uuid}&table_name=${num}`);
+        document.getElementById('output').value = urls.join('\n');
+    }
+
+    async function generateQRCodes() {
+        const venueName = document.getElementById('venueName').value.toLowerCase();
+        const urls = document.getElementById('output').value.trim().split('\n');
+        const qrColor = document.getElementById('qrColor').value;
+
+        if (venueName && urls.length) {
+            const zip = new JSZip();
+
+            const qrCodeFiles = await Promise.all(urls.map(async (url) => {
                 const qrCode = await QRCode.toDataURL(url, {
                     errorCorrectionLevel: 'L',
                     type: 'image/png',
@@ -114,62 +118,25 @@
                     width: 1000,
                 });
 
+                const fileName = `${url.split('=').pop()}_${venueName}.png`;
+                return { fileName, qrCode };
+            }));
+
+            qrCodeFiles.forEach(({ fileName, qrCode }) => {
+                zip.file(fileName, qrCode.split(',')[1], { base64: true });
+            });
+
+            zip.generateAsync({ type: 'blob' }).then(blob => {
                 const link = document.createElement('a');
-                link.href = qrCode;
-                link.download = `${url.split('=')[-1]}_${venueName}.png`;
+                link.href = URL.createObjectURL(blob);
+                link.download = `${venueName}_qrcodes.zip`;
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-
-                if (index === urls.length - 1) {
-                    alert('QR Codes have been generated and downloaded.');
-                }
             });
         } else {
             alert('Please enter a venue name and generate URLs before generating QR codes.');
         }
     }
-    async function generateQRCodes() {
-    const venueName = document.getElementById('venueName').value.toLowerCase();
-    const urls = document.getElementById('output').value.trim().split('\n');
-    const qrColor = document.getElementById('qrColor').value;
-
-    if (venueName && urls.length) {
-        const zip = new JSZip();
-
-        const qrCodeFiles = await Promise.all(urls.map(async (url) => {
-            const qrCode = await QRCode.toDataURL(url, {
-                errorCorrectionLevel: 'L',
-                type: 'image/png',
-                color: {
-                    dark: qrColor,
-                    light: qrColor === 'white' ? 'transparent' : 'white',
-                },
-                width: 1000,
-            });
-
-            const fileName = `${url.split('=').pop()}_${venueName}.png`;
-            return { fileName, qrCode };
-        }));
-
-        qrCodeFiles.forEach(({ fileName, qrCode }) => {
-            zip.file(fileName, qrCode.split(',')[1], { base64: true });
-        });
-
-        zip.generateAsync({ type: 'blob' }).then(blob => {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${venueName}_qrcodes.zip`;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    } else {
-        alert('Please enter a venue name and generate URLs before generating QR codes.');
-    }
-}
-
-
 </script>
